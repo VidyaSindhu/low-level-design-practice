@@ -76,17 +76,22 @@ public class DatabaseManagerImpl implements DatabaseManager {
     if (rows.size() > 0) {
       Set<Column> columns = rows.get(0).keySet();
       for (Column column: columns) {
-        System.out.print(column.getColumnName() + "  |   ");
+        System.out.print(column.getColumnName() + "  |  ");
       }
       System.out.print("\n");
 
 
       for (val row: rows) {
         for (Column column: columns) {
-          System.out.print(row.get(column) + "  |   ");
+          System.out.print(row.get(column) + "  |  ");
         }
-        System.out.println("\n");
+        System.out.print("\n");
       }
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("-".repeat(80));
+      sb.append("\n");
+      System.out.println(sb.toString());
     }
 
 
