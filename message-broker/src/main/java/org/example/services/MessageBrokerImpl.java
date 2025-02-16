@@ -43,7 +43,7 @@ public class MessageBrokerImpl implements MessageBroker {
   @Override
   public String addQueue(String queueName) {
     String queueManagerName = getQueueManagerName(queueName);
-    if (queueManagerMap.containsKey(queueName)) {
+    if (queueManagerMap.containsKey(queueManagerName)) {
       //exception can be thrown here
       return queueManagerName;
     }
