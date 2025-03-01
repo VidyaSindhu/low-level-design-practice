@@ -22,8 +22,6 @@ public class BookingSystemManager {
 
   private final Map<Integer, Booking> bookingMap; // <bookingId, Booking>
 
-  private final Map<String, Set<Integer>> userBookingMap; // <userId, Set<bookingId>>
-
   private final AtomicInteger bookingIdGenerator = new AtomicInteger(0);
   private final EventManager eventManager;
 
@@ -45,7 +43,6 @@ public class BookingSystemManager {
     bookingMap = new ConcurrentHashMap<>();
     showBookingMap = new ConcurrentHashMap<>();
     eventManager = EventManager.getInstance();
-    userBookingMap = new ConcurrentHashMap<>();
     confirmWaitingBookingStrategy = new ConfirmWaitingBookingStrategyImpl();
   }
 
@@ -84,7 +81,6 @@ public class BookingSystemManager {
     bookingMap.put(booking.getBookingId(), booking);
     showBookingMap.computeIfAbsent(booking.getShow().getShowId(), k -> new ConcurrentHashMap<>())
             .computeIfAbsent(booking.getBookingStatus(), k -> new TreeSet<>()).add(booking);
-    userBookingMap.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(booking.getBookingId());
 
     return booking.getBookingId();
   }
@@ -102,38 +98,42 @@ public class BookingSystemManager {
     }
 
     boolean wasConfirmed = booking.getBookingStatus() == BookingStatus.CONFIRMED;
-    showBookingMap.get(booking.getShow().getShowId()).get(booking.getBookingStatus()).remove(booking);
 
-    if (showBookingMap.get(booking.getShow().getShowId()).get(booking.getBookingStatus()).isEmpty()) {
-      showBookingMap.get(booking.getShow().getShowId()).remove(booking.getBookingStatus());
-    }
-
+    removeBookingFromShowMap(booking);
     booking.setBookingStatus(BookingStatus.CANCELLED);
 
-
-    showBookingMap.get(booking.getShow().getShowId())
-            .computeIfAbsent(booking.getBookingStatus(), k -> new TreeSet<>())
-            .add(booking);
+    addBookingInShowMap(booking);
 
     if (!wasConfirmed) {
       return;
     }
 
     booking.getShow().decrementSeats(booking.getNumberOfSeats());
-    userBookingMap.get(booking.getUserId()).remove(bookingId);
 
 
     Set<Booking> waitingBookings = showBookingMap.get(booking.getShow().getShowId()).get(BookingStatus.WAITING);
     Booking nextBooking = confirmWaitingBookingStrategy.confirmWaitingBooking(new TreeSet<>(waitingBookings));
     if (nextBooking != null) {
-      nextBooking.setBookingStatus(BookingStatus.CONFIRMED);
-      userBookingMap.get(nextBooking.getUserId()).add(nextBooking.getBookingId());
       nextBooking.getShow().incrementBookedSeats(nextBooking.getNumberOfSeats());
-      waitingBookings.remove(nextBooking);
-      if (waitingBookings.isEmpty()) {
-        showBookingMap.get(booking.getShow().getShowId()).remove(BookingStatus.WAITING);
-      }
-      showBookingMap.get(nextBooking.getShow().getShowId()).computeIfAbsent(BookingStatus.CONFIRMED, k -> new TreeSet<>()).add(nextBooking);
+
+      removeBookingFromShowMap(nextBooking);
+
+      nextBooking.setBookingStatus(BookingStatus.CONFIRMED);
+      addBookingInShowMap(nextBooking);
+    }
+  }
+
+  private void addBookingInShowMap(Booking booking) {
+    showBookingMap.get(booking.getShow().getShowId())
+            .computeIfAbsent(booking.getBookingStatus(), k -> new TreeSet<>())
+            .add(booking);
+  }
+
+  private void removeBookingFromShowMap(Booking booking) {
+    showBookingMap.get(booking.getShow().getShowId()).get(booking.getBookingStatus()).remove(booking);
+
+    if (showBookingMap.get(booking.getShow().getShowId()).get(booking.getBookingStatus()).isEmpty()) {
+      showBookingMap.get(booking.getShow().getShowId()).remove(booking.getBookingStatus());
     }
   }
 
