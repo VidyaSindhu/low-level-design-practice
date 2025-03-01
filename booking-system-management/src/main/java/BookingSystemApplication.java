@@ -42,26 +42,33 @@ public class BookingSystemApplication {
   public static void main(String[] args) {
     bookingSystemManager = BookingSystemManager.getInstance();
 
-    eventManager.registerEvent("TMKOC", EventGenre.COMEDY);
-    eventManager.registerEvent("The Sonu Nigam Live Event", EventGenre.SINGING);
+    try {
+      eventManager.registerEvent("TMKOC", EventGenre.COMEDY);
+      eventManager.registerEvent("The Sonu Nigam Live Event", EventGenre.SINGING);
 
-    eventManager.addShow("TMKOC", LocalTime.of(9, 0), LocalTime.of(10, 0), 3);
+      eventManager.addShow("TMKOC", LocalTime.of(9, 0), LocalTime.of(10, 0), 3);
 
-    eventManager.addShow("The Sonu Nigam Live Event", LocalTime.of(10,0), LocalTime.of(11, 0), 3);
-    eventManager.addShow("The Sonu Nigam Live Event",  LocalTime.of(13, 0), LocalTime.of(14, 0), 2);
-    eventManager.addShow("The Sonu Nigam Live Event",  LocalTime.of(17, 0), LocalTime.of(18, 0), 1);
+      eventManager.addShow("The Sonu Nigam Live Event", LocalTime.of(10,0), LocalTime.of(11, 0), 3);
+      eventManager.addShow("The Sonu Nigam Live Event",  LocalTime.of(13, 0), LocalTime.of(14, 0), 2);
+      eventManager.addShow("The Sonu Nigam Live Event",  LocalTime.of(17, 0), LocalTime.of(18, 0), 1);
 
-    eventManager.printShows(EventGenre.COMEDY);
-    eventManager.printShows(EventGenre.SINGING);
+      eventManager.printShows(EventGenre.COMEDY);
+      eventManager.printShows(EventGenre.SINGING);
 
-    int bookingId = bookingSystemManager.bookShowTicket("UserA", "TMKOC", LocalTime.of(9, 0), 2);
-    int bookingId2 = bookingSystemManager.bookShowTicket("UserB", "TMKOC", LocalTime.of(9, 0), 2);
-    int bookingId3 = bookingSystemManager.bookShowTicket("UserC", "TMKOC", LocalTime.of(9, 0), 3);
+      int bookingId = bookingSystemManager.bookShowTicket("UserA", "TMKOC", LocalTime.of(9, 0), 2);
+      int bookingId2 = bookingSystemManager.bookShowTicket("UserA", "TMKOC", LocalTime.of(9, 0), 1);
+      int bookingId3 = bookingSystemManager.bookShowTicket("UserB", "TMKOC", LocalTime.of(9, 0), 2);
+      int bookingId4 = bookingSystemManager.bookShowTicket("UserC", "TMKOC", LocalTime.of(9, 0), 2);
 
-    bookingSystemManager.cancelBooking(bookingId);
-    bookingSystemManager.cancelBooking(bookingId2);
+      bookingSystemManager.cancelBooking(bookingId);
+      bookingSystemManager.cancelBooking(bookingId3);
 
-    bookingSystemManager.printAllBookingsForAShow("TMKOC", LocalTime.of(9, 0));
+      bookingSystemManager.printAllBookingsForAShow("TMKOC", LocalTime.of(9, 0));
+
+      bookingSystemManager.printAllUserBookings("UserA");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private static boolean processCommand(String input) {
