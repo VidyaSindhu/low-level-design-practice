@@ -22,6 +22,8 @@ public class BookingSystemManager {
 
   private final Map<Integer, Booking> bookingMap; // <bookingId, Booking>
 
+  private final Map<String, Set<Integer>> userBookingMap; // <userId, Set<bookingId>>
+
   private final AtomicInteger bookingIdGenerator = new AtomicInteger(0);
   private final EventManager eventManager;
 
@@ -43,6 +45,7 @@ public class BookingSystemManager {
     bookingMap = new ConcurrentHashMap<>();
     showBookingMap = new ConcurrentHashMap<>();
     eventManager = EventManager.getInstance();
+    userBookingMap = new ConcurrentHashMap<>();
     confirmWaitingBookingStrategy = new ConfirmWaitingBookingStrategyImpl();
   }
 
@@ -81,6 +84,7 @@ public class BookingSystemManager {
     bookingMap.put(booking.getBookingId(), booking);
     showBookingMap.computeIfAbsent(booking.getShow().getShowId(), k -> new ConcurrentHashMap<>())
             .computeIfAbsent(booking.getBookingStatus(), k -> new TreeSet<>()).add(booking);
+    userBookingMap.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(booking.getBookingId());
 
     return booking.getBookingId();
   }
@@ -98,8 +102,8 @@ public class BookingSystemManager {
     }
 
     boolean wasConfirmed = booking.getBookingStatus() == BookingStatus.CONFIRMED;
-
     removeBookingFromShowMap(booking);
+
     booking.setBookingStatus(BookingStatus.CANCELLED);
 
     addBookingInShowMap(booking);
@@ -109,7 +113,6 @@ public class BookingSystemManager {
     }
 
     booking.getShow().decrementSeats(booking.getNumberOfSeats());
-
 
     Set<Booking> waitingBookings = showBookingMap.get(booking.getShow().getShowId()).get(BookingStatus.WAITING);
     Booking nextBooking = confirmWaitingBookingStrategy.confirmWaitingBooking(new TreeSet<>(waitingBookings));
@@ -138,6 +141,7 @@ public class BookingSystemManager {
   }
 
   public void printAllBookingsForAShow(String eventType, LocalTime startTime) {
+    System.out.println("----------------------------------");
     int showId = eventManager.getShow(eventType, startTime).getShowId();
     val showBookings = showBookingMap.get(showId);
     for (Map.Entry<BookingStatus, Set<Booking>> entry : showBookings.entrySet()) {
@@ -146,5 +150,16 @@ public class BookingSystemManager {
         System.out.println(booking);
       }
     }
+
+    System.out.println("----------------------------------");
+  }
+
+  public void printAllUserBookings(String userId) {
+    val userBookings = userBookingMap.get(userId);
+    System.out.println("User: " + userId);
+    for (int bookingId : userBookings) {
+      System.out.println(bookingMap.get(bookingId));
+    }
+    System.out.println("----------------------------------");
   }
 }
